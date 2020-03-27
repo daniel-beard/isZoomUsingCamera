@@ -7,13 +7,27 @@
 //
 
 import AppKit
+import SwiftUI
 import Combine
 import SwiftShell
 
 final class ZoomStatus: ObservableObject {
-    @Published var textResult = "No results"
+    @Published var textResult: String = "No results" {
+        didSet {
+            guard toggleDND == true else { return }
+            guard oldValue != textResult else { return }
+            switch sampleResult {
+                case .usingCamera: DNDUtil.enableDND()
+                case .notUsingCamera, .zoomNotRunning: DNDUtil.disableDND()
+                default: break
+            }
+        }
+    }
+    @Published var toggleDND = false
+    
     let interval: TimeInterval = 1
     private var timer: Timer? = nil
+    private var sampleResult: SampleResult = .noResult
 
     func start() {
         guard timer == nil else { return }
@@ -21,6 +35,7 @@ final class ZoomStatus: ObservableObject {
             let sampler = SampleProvider()
             sampler.run(callback: { result in
                 DispatchQueue.main.async {
+                    self?.sampleResult = result
                     switch result {
                         case .noResult:         self?.textResult = "No result"
                         case .usingCamera:      self?.textResult = "Zoom is USING the camera"
@@ -71,7 +86,7 @@ struct SampleProvider {
             let pid = zoomApps.first!.processIdentifier
 
             // Sample with PID
-            try? SwiftShell.runAndPrint(bash: "/usr/bin/sample \(pid) \(self.sampleDuration) -f \(self.sampleFile)")
+            SwiftShell.run(bash: "/usr/bin/sample \(pid) \(self.sampleDuration) -f \(self.sampleFile)")
 
             // Parse output and return a result. 0 exitCode is a match.
             let exitCode = SwiftShell.run(bash: "/usr/bin/grep '\(self.sampleSentinel)' \(self.sampleFile)").exitcode
@@ -85,6 +100,18 @@ struct SampleProvider {
             }
         }
     }
+}
 
+struct DNDUtil {
+    static func enableDND() {
+        print(SwiftShell.run(bash: "defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturb -boolean true").exitcode)
+        print(SwiftShell.run(bash: #"defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturbDate -date "`date -u +\"%Y-%m-%d %H:%M:%S +0000\"`""#).exitcode)
+        print(SwiftShell.run(bash: "killall NotificationCenter").exitcode)
+    }
+
+    static func disableDND() {
+        SwiftShell.run(bash: "defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturb -boolean false")
+        SwiftShell.run(bash: "killall NotificationCenter")
+    }
 }
 
