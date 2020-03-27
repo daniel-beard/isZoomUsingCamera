@@ -3,6 +3,8 @@
 Simple SwiftUI app that checks if Zoom is actively using the camera.
 Future work includes automatically setting Do Not Disturb when the camera usage changes.
 
+![screenshot](Resources/screenshot.png)
+
 # Usage
 
 There aren't any provided builds yet.
