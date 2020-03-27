@@ -1,0 +1,67 @@
+# Build by xcodegen
+Example/*.xcworkspace
+Example/*.xcodeproj
+Example/Pods/
+
+
+# OS X
+.DS_Store
+
+# Xcode
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+profile
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+project.xcworkspace
+
+# node.js
+node_modules
+npm-debug.log
+libs
+gen
+yarn-error.log
+
+# Code Editor Settings
+.idea/
+.vscode/
+
+# Android
+*.iml
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+/build
+/captures
+.externalNativeBuild
+
+# Bundler
+.bundle
+
+# Selenium
+selenium-debug.log
+test/reports/*
+test/screenshots/*
+
+# Fastlane
+fastlane/report.xml
+fastlane/test_output/*
+
+# Cocoapods
+Local\ Podspecs/
+
+# Carthage
+framework/Carthage
