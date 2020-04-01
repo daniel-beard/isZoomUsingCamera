@@ -14,13 +14,15 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
+            Image("Settings_Icon")
+                .padding([.leading, .bottom, .trailing, .top])
             Text(userData.textResult)
                 .frame(maxWidth: .infinity, maxHeight: 300)
                 .onAppear { self.userData.start() }
             HStack {
                 Toggle(isOn: $userData.toggleDND) {
                     Text("Automatically enable DND when Zoom video is on")
-                }
+                }.padding([.bottom])
             }
         }
     }
