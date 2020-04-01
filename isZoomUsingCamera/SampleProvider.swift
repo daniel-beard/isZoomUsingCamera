@@ -11,6 +11,8 @@ import SwiftUI
 import Combine
 import SwiftShell
 
+let DEFAULTS_ENABLE_DND_AUTOMATICALLY = "enable.dnd.auntomatically.v1"
+
 final class ZoomStatus: ObservableObject {
     @Published var textResult: String = "No results" {
         didSet {
@@ -23,7 +25,12 @@ final class ZoomStatus: ObservableObject {
             }
         }
     }
-    @Published var toggleDND = false
+    @Published var toggleDND = UserDefaults.standard.bool(forKey: DEFAULTS_ENABLE_DND_AUTOMATICALLY) {
+        didSet {
+            UserDefaults.standard.set(toggleDND, forKey: DEFAULTS_ENABLE_DND_AUTOMATICALLY)
+            UserDefaults.standard.synchronize()
+        }
+    }
     
     let interval: TimeInterval = 1
     private var timer: Timer? = nil
