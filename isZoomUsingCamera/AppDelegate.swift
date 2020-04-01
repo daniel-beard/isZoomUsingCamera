@@ -55,6 +55,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                                            keyEquivalent: "")
         hideByDefaultItem.state = hideWindowState
         statusBarMenu.addItem(hideByDefaultItem)
+
+        statusBarMenu.addItem(NSMenuItem.separator())
+
+        let quitItem = NSMenuItem(title: "Quit", action: #selector(terminate), keyEquivalent: "")
+        quitItem.isEnabled = true
+        statusBarMenu.addItem(quitItem)
     }
         
     /// Creates the main window of the application and makes it visible.
@@ -72,6 +78,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.contentView = NSHostingView(rootView: contentView)
         window.makeKeyAndOrderFront(nil)
         window.delegate = self
+    }
+
+    /// Quits the application
+    @objc func terminate() {
+        NSRunningApplication.current.terminate()
     }
 
     // MARK: Window Delegate

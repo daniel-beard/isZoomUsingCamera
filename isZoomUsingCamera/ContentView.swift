@@ -15,7 +15,7 @@ struct ContentView: View {
     var body: some View {
         VStack {
             Image("Settings_Icon")
-                .padding([.leading, .bottom, .trailing, .top])
+                .padding(.all)
             Text(userData.textResult)
                 .frame(maxWidth: .infinity, maxHeight: 300)
                 .onAppear { self.userData.start() }
