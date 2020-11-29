@@ -18,13 +18,14 @@ final class ZoomStatus: ObservableObject {
         didSet {
             guard toggleDND == true else { return }
             guard oldValue != textResult else { return }
-            switch sampleResult {
+            switch cameraSampleResult {
                 case .usingCamera: DNDUtil.enableDND()
                 case .notUsingCamera, .zoomNotRunning: DNDUtil.disableDND()
                 default: break
             }
         }
     }
+    @Published var screensharingText: String = "Not sharing screen"
     @Published var toggleDND = UserDefaults.standard.bool(forKey: DEFAULTS_ENABLE_DND_AUTOMATICALLY) {
         didSet {
             UserDefaults.standard.set(toggleDND, forKey: DEFAULTS_ENABLE_DND_AUTOMATICALLY)
@@ -34,24 +35,24 @@ final class ZoomStatus: ObservableObject {
     
     let interval: TimeInterval = 1
     private var timer: Timer? = nil
-    private var sampleResult: SampleResult = .noResult
+    private var cameraSampleResult: CameraSampleResult = .noResult
+    private var screenShareSampleResult: ScreenSharingSampleResult = .notScreenSharing
 
     func start() {
         guard timer == nil else { return }
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true, block: { [weak self] _ in
-            let sampler = SampleProvider()
-            sampler.run(callback: { result in
+            CameraUsageSampleProvider().run(callback: { result in
                 DispatchQueue.main.async {
-                    self?.sampleResult = result
-                    switch result {
-                        case .noResult:         self?.textResult = "No result"
-                        case .usingCamera:      self?.textResult = "Zoom is USING the camera"
-                        case .notUsingCamera:   self?.textResult = "Zoom is NOT USING the camera"
-                        case .zoomNotRunning:   self?.textResult = "Zoom does not appear to be running"
-                        case .errorSampling:    self?.textResult = "Error sampling"
-                    }
+                    self?.cameraSampleResult = result
+                    self?.textResult = result.displayText()
                 }
             })
+            ScreenSharingUsageSampleProvider().run { result in
+                DispatchQueue.main.async {
+                    self?.screenShareSampleResult = result
+                    self?.screensharingText = result.displayText()
+                }
+            }
         })
     }
 
@@ -65,21 +66,76 @@ final class ZoomStatus: ObservableObject {
     }
 }
 
-enum SampleResult {
+enum CameraSampleResult {
     case noResult
     case usingCamera
     case zoomNotRunning
     case notUsingCamera
     case errorSampling
+
+    func displayText() -> String {
+        switch self {
+            case .noResult:         return "No result"
+            case .usingCamera:      return "Zoom is USING the camera"
+            case .notUsingCamera:   return "Zoom is NOT USING the camera"
+            case .zoomNotRunning:   return "Zoom does not appear to be running"
+            case .errorSampling:    return "Error sampling"
+        }
+    }
 }
 
-struct SampleProvider {
+enum ScreenSharingSampleResult {
+    case notScreenSharing
+    case screenSharing
+
+    func displayText() -> String {
+        switch self {
+        case .notScreenSharing: return "Not screen sharing"
+        case .screenSharing:    return "Screen sharing"
+        }
+    }
+}
+
+struct ScreenSharingUsageSampleProvider {
+    let sampleDuration = 0.1
+    let sampleFile = "/tmp/zoomsamplescreensharing"
+    let sampleSentinel = "capture thread"
+
+    func run(callback: @escaping (ScreenSharingSampleResult) -> Void) {
+        DispatchQueue(label: "Sampler").async {
+
+            let zoomApps = NSRunningApplication.runningApplications(withBundleIdentifier: "us.zoom.CptHost")
+            guard !zoomApps.isEmpty else {
+                callback(.notScreenSharing)
+                return
+            }
+
+            // Only pick first for now
+            //TODO: Technically you can run multiple instances of zoom, but we'll ignore that for now.
+            let pid = zoomApps.first!.processIdentifier
+
+            // Sample with PID
+            SwiftShell.run(bash: "/usr/bin/sample \(pid) \(self.sampleDuration) -f \(self.sampleFile)")
+
+            // Parse output and return a result. 0 exitCode is a match.
+            let exitCode = SwiftShell.run(bash: "/usr/bin/grep '\(self.sampleSentinel)' \(self.sampleFile)").exitcode
+
+            if exitCode == 0 {
+                callback(.screenSharing); return
+            } else if exitCode == 1 {
+                callback(.notScreenSharing); return
+            }
+        }
+    }
+}
+
+struct CameraUsageSampleProvider {
 
     let sampleDuration = 0.1
     let sampleFile = "/tmp/zoomsample"
     let sampleSentinel = "CMIOGraph::DoWork"
 
-    func run(callback: @escaping (SampleResult) -> Void) {
+    func run(callback: @escaping (CameraSampleResult) -> Void) {
         DispatchQueue(label: "Sampler").async {
 
             let zoomApps = NSRunningApplication.runningApplications(withBundleIdentifier: "us.zoom.xos")

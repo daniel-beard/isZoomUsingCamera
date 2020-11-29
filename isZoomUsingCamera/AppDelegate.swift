@@ -22,12 +22,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Creating the application menu
         createStatusBarMenu()
-        
-        // Creating the Zoom Sample Provider that will check if Zoom is enabled or not
-        let s = SampleProvider()
-        s.run(callback: { sampleResult in
-            print(sampleResult)
-        })
 
         if UserDefaults.standard.object(forKey: DEFAULTS_WINDOW_VISIBLE_BY_DEFAULT) as? NSControl.StateValue == .off {
             createAndShowWindow()

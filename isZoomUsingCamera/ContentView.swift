@@ -19,6 +19,8 @@ struct ContentView: View {
             Text(userData.textResult)
                 .frame(maxWidth: .infinity, maxHeight: 300)
                 .onAppear { self.userData.start() }
+            Text(userData.screensharingText)
+                .frame(maxWidth: .infinity, maxHeight: 300)
             HStack {
                 Toggle(isOn: $userData.toggleDND) {
                     Text("Automatically enable DND when Zoom video is on")
