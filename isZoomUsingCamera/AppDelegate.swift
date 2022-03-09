@@ -23,9 +23,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Creating the application menu
         createStatusBarMenu()
 
-        if UserDefaults.standard.object(forKey: DEFAULTS_WINDOW_VISIBLE_BY_DEFAULT) as? NSControl.StateValue == .off {
+//        if UserDefaults.standard.object(forKey: DEFAULTS_WINDOW_VISIBLE_BY_DEFAULT) as? NSControl.StateValue == .off {
             createAndShowWindow()
-        }
+//        }
     }
 
     // MARK: UI Creation
@@ -60,7 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     /// Creates the main window of the application and makes it visible.
     func createAndShowWindow() {
         // Create the SwiftUI view that provides the window contents.
-        let contentView = ContentView().environmentObject(ZoomStatus())
+        let contentView = ContentView().environmentObject(Model())
         
         // Create the window and set the content view.
         window = NSWindow(

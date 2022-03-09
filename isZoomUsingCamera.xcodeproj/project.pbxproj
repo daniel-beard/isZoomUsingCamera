@@ -12,8 +12,8 @@
 		2412404F242E8D8100286FE5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2412404E242E8D8100286FE5 /* Assets.xcassets */; };
 		24124052242E8D8100286FE5 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 24124051242E8D8100286FE5 /* Preview Assets.xcassets */; };
 		24124055242E8D8100286FE5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 24124053242E8D8100286FE5 /* Main.storyboard */; };
-		2412405F242E8DAB00286FE5 /* SwiftShell in Frameworks */ = {isa = PBXBuildFile; productRef = 2412405E242E8DAB00286FE5 /* SwiftShell */; };
-		24124061242E8DC600286FE5 /* SampleProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24124060242E8DC600286FE5 /* SampleProvider.swift */; };
+		24124061242E8DC600286FE5 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24124060242E8DC600286FE5 /* Model.swift */; };
+		24ABD59627D7D33500FE8A90 /* SwiftShell in Frameworks */ = {isa = PBXBuildFile; productRef = 24ABD59527D7D33500FE8A90 /* SwiftShell */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +25,7 @@
 		24124054242E8D8100286FE5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		24124056242E8D8100286FE5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		24124057242E8D8100286FE5 /* isZoomUsingCamera.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = isZoomUsingCamera.entitlements; sourceTree = "<group>"; };
-		24124060242E8DC600286FE5 /* SampleProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleProvider.swift; sourceTree = "<group>"; };
+		24124060242E8DC600286FE5 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,7 +33,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2412405F242E8DAB00286FE5 /* SwiftShell in Frameworks */,
+				24ABD59627D7D33500FE8A90 /* SwiftShell in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -60,7 +60,7 @@
 			isa = PBXGroup;
 			children = (
 				2412404A242E8D8000286FE5 /* AppDelegate.swift */,
-				24124060242E8DC600286FE5 /* SampleProvider.swift */,
+				24124060242E8DC600286FE5 /* Model.swift */,
 				2412404C242E8D8000286FE5 /* ContentView.swift */,
 				2412404E242E8D8100286FE5 /* Assets.xcassets */,
 				24124053242E8D8100286FE5 /* Main.storyboard */,
@@ -96,7 +96,7 @@
 			);
 			name = isZoomUsingCamera;
 			packageProductDependencies = (
-				2412405E242E8DAB00286FE5 /* SwiftShell */,
+				24ABD59527D7D33500FE8A90 /* SwiftShell */,
 			);
 			productName = isZoomUsingCamera;
 			productReference = 24124047242E8D8000286FE5 /* isZoomUsingCamera.app */;
@@ -127,7 +127,7 @@
 			);
 			mainGroup = 2412403E242E8D8000286FE5;
 			packageReferences = (
-				2412405D242E8DAB00286FE5 /* XCRemoteSwiftPackageReference "SwiftShell" */,
+				24ABD59427D7D33500FE8A90 /* XCRemoteSwiftPackageReference "SwiftShell" */,
 			);
 			productRefGroup = 24124048242E8D8000286FE5 /* Products */;
 			projectDirPath = "";
@@ -157,7 +157,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2412404D242E8D8000286FE5 /* ContentView.swift in Sources */,
-				24124061242E8DC600286FE5 /* SampleProvider.swift in Sources */,
+				24124061242E8DC600286FE5 /* Model.swift in Sources */,
 				2412404B242E8D8000286FE5 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -226,7 +226,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -280,7 +280,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -303,7 +303,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dbeard.isZoomUsingCamera;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -324,7 +324,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 11.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dbeard.isZoomUsingCamera;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -355,20 +355,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2412405D242E8DAB00286FE5 /* XCRemoteSwiftPackageReference "SwiftShell" */ = {
+		24ABD59427D7D33500FE8A90 /* XCRemoteSwiftPackageReference "SwiftShell" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kareman/SwiftShell.git";
+			repositoryURL = "https://github.com/kareman/SwiftShell";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.1.0;
+				minimumVersion = 5.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		2412405E242E8DAB00286FE5 /* SwiftShell */ = {
+		24ABD59527D7D33500FE8A90 /* SwiftShell */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 2412405D242E8DAB00286FE5 /* XCRemoteSwiftPackageReference "SwiftShell" */;
+			package = 24ABD59427D7D33500FE8A90 /* XCRemoteSwiftPackageReference "SwiftShell" */;
 			productName = SwiftShell;
 		};
 /* End XCSwiftPackageProductDependency section */

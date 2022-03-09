@@ -1,5 +1,5 @@
 //
-//  SampleProvider.swift
+//  Model.swift
 //  isZoomUsingCamera
 //
 //  Created by Daniel Beard on 3/27/20.
@@ -11,60 +11,9 @@ import SwiftUI
 import Combine
 import SwiftShell
 
+// MARK: Types and enums
+
 let DEFAULTS_ENABLE_DND_AUTOMATICALLY = "enable.dnd.auntomatically.v1"
-
-final class ZoomStatus: ObservableObject {
-    @Published var textResult: String = "No results" {
-        didSet {
-            guard toggleDND == true else { return }
-            guard oldValue != textResult else { return }
-            switch cameraSampleResult {
-                case .usingCamera: DNDUtil.enableDND()
-                case .notUsingCamera, .zoomNotRunning: DNDUtil.disableDND()
-                default: break
-            }
-        }
-    }
-    @Published var screensharingText: String = "Not sharing screen"
-    @Published var toggleDND = UserDefaults.standard.bool(forKey: DEFAULTS_ENABLE_DND_AUTOMATICALLY) {
-        didSet {
-            UserDefaults.standard.set(toggleDND, forKey: DEFAULTS_ENABLE_DND_AUTOMATICALLY)
-            UserDefaults.standard.synchronize()
-        }
-    }
-    
-    let interval: TimeInterval = 1
-    private var timer: Timer? = nil
-    private var cameraSampleResult: CameraSampleResult = .noResult
-    private var screenShareSampleResult: ScreenSharingSampleResult = .notScreenSharing
-
-    func start() {
-        guard timer == nil else { return }
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true, block: { [weak self] _ in
-            CameraUsageSampleProvider().run(callback: { result in
-                DispatchQueue.main.async {
-                    self?.cameraSampleResult = result
-                    self?.textResult = result.displayText()
-                }
-            })
-            ScreenSharingUsageSampleProvider().run { result in
-                DispatchQueue.main.async {
-                    self?.screenShareSampleResult = result
-                    self?.screensharingText = result.displayText()
-                }
-            }
-        })
-    }
-
-    func stop() {
-        timer?.invalidate()
-        timer = nil
-    }
-
-    deinit {
-        stop()
-    }
-}
 
 enum CameraSampleResult {
     case noResult
@@ -95,6 +44,87 @@ enum ScreenSharingSampleResult {
         }
     }
 }
+
+enum ShortcutsError: Error {
+    case canNotRetrieve(String)
+}
+
+//MARK: Top level observable
+
+final class Model: ObservableObject {
+
+    @AppStorage("dndOnShortcut") var dndOnShortcutSelection: String = ""
+    @AppStorage("dndOffShortcut") var dndOffShortcutSelection: String = ""
+    @AppStorage("shouldToggleDND") var dndToggle: Bool = false
+
+    @Published var canShowShortcuts = false
+
+    @Published var textResult: String = "No results" {
+        didSet {
+            guard dndToggle == true else { return }
+            guard oldValue != textResult else { return }
+            switch cameraSampleResult {
+                case .usingCamera: DNDUtil.enableDND()
+                case .notUsingCamera, .zoomNotRunning: DNDUtil.disableDND()
+                default: break
+            }
+        }
+    }
+    @Published var screensharingText: String = "Not sharing screen"
+
+    let interval: TimeInterval = 1
+    private var timer: Timer? = nil
+    private var cameraSampleResult: CameraSampleResult = .noResult
+    private var screenShareSampleResult: ScreenSharingSampleResult = .notScreenSharing
+
+    @Published var listOfAvailableShortcuts = [String]()
+    private var shortcutsProvider = ShortcutsListProvider()
+
+    init() {
+        canShowShortcuts = !(NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue)
+    }
+
+    func fetchShortcutsList() async {
+        do {
+            let result = try await shortcutsProvider.run()
+            DispatchQueue.main.async { self.listOfAvailableShortcuts = result }
+        } catch {
+            listOfAvailableShortcuts = ["Could not retrieve list of shortcuts"]
+        }
+    }
+
+    func start() {
+        Task {
+            await fetchShortcutsList()
+        }
+        guard timer == nil else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true, block: { [weak self] _ in
+            CameraUsageSampleProvider().run(callback: { result in
+                DispatchQueue.main.async {
+                    self?.cameraSampleResult = result
+                    self?.textResult = result.displayText()
+                }
+            })
+            ScreenSharingUsageSampleProvider().run { result in
+                DispatchQueue.main.async {
+                    self?.screenShareSampleResult = result
+                    self?.screensharingText = result.displayText()
+                }
+            }
+        })
+    }
+
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    deinit {
+        stop()
+    }
+}
+
+// MARK: Zoom providers
 
 struct ScreenSharingUsageSampleProvider {
     let sampleDuration = 0.1
@@ -165,16 +195,40 @@ struct CameraUsageSampleProvider {
     }
 }
 
+// MARK: Shortcuts provider
+
+struct ShortcutsListProvider {
+    func run() async throws -> [String] {
+        try await withCheckedThrowingContinuation({ cont in
+            DispatchQueue(label: "shortcutsProvider").async {
+                let result = SwiftShell.run(bash: "shortcuts list")
+                if result.exitcode == 0 {
+                    cont.resume(with: .success(result.stdout.split(separator: "\n").map { String($0)} ))
+                } else {
+                    cont.resume(throwing: ShortcutsError.canNotRetrieve("Could not retrieve shortcuts list"))
+                }
+            }
+        })
+    }
+}
+
 struct DNDUtil {
     static func enableDND() {
-        print(SwiftShell.run(bash: "defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturb -boolean true").exitcode)
-        print(SwiftShell.run(bash: #"defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturbDate -date "`date -u +\"%Y-%m-%d %H:%M:%S +0000\"`""#).exitcode)
-        print(SwiftShell.run(bash: "killall NotificationCenter").exitcode)
+        // On Monterey or newer, we have to use shortcuts. Older we need to do plist trickery.
+        if NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue {
+            // TODO: Big Sur and older
+        } else {
+            print(SwiftShell.run(bash: "shortcuts run dndon").exitcode)
+        }
     }
 
     static func disableDND() {
-        SwiftShell.run(bash: "defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui doNotDisturb -boolean false")
-        SwiftShell.run(bash: "killall NotificationCenter")
+        // On Monterey or newer, we have to use shortcuts. Older we need to do plist trickery.
+        if NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue {
+            // TODO: Big Sur and older
+        } else {
+            print(SwiftShell.run(bash: "shortcuts run dndoff"))
+        }
     }
 }
 
