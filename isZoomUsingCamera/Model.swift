@@ -76,13 +76,7 @@ final class Model: ObservableObject {
 
     @Published var canShowShortcuts = false
 
-    @Published var textResult: String = "No results" {
-        didSet {
-            guard dndToggle == true else { return }
-            guard oldValue != textResult else { return }
-
-        }
-    }
+    @Published var textResult: String = "No results"
     @Published var screensharingText: String = "Not sharing screen"
 
     let interval: TimeInterval = 1
