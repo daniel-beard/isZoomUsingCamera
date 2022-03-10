@@ -13,8 +13,6 @@ import SwiftShell
 
 // MARK: Types and enums
 
-let DEFAULTS_ENABLE_DND_AUTOMATICALLY = "enable.dnd.auntomatically.v1"
-
 enum CameraSampleResult {
     case noResult
     case usingCamera
@@ -53,9 +51,10 @@ enum ShortcutsError: Error {
 
 final class Model: ObservableObject {
 
-    @AppStorage("dndOnShortcut") var dndOnShortcutSelection: String = ""
-    @AppStorage("dndOffShortcut") var dndOffShortcutSelection: String = ""
-    @AppStorage("shouldToggleDND") var dndToggle: Bool = false
+    @AppStorage("dndOnShortcut") var dndOnShortcutSelection = ""
+    @AppStorage("dndOffShortcut") var dndOffShortcutSelection = ""
+    @AppStorage("shouldToggleDND") var dndToggle = false
+    @AppStorage("runCustomScripts") var runCustomScripts = false
 
     @Published var canShowShortcuts = false
 
@@ -64,8 +63,8 @@ final class Model: ObservableObject {
             guard dndToggle == true else { return }
             guard oldValue != textResult else { return }
             switch cameraSampleResult {
-                case .usingCamera: DNDUtil.enableDND()
-                case .notUsingCamera, .zoomNotRunning: DNDUtil.disableDND()
+                case .usingCamera: enableDND()
+                case .notUsingCamera, .zoomNotRunning: disableDND()
                 default: break
             }
         }
@@ -113,6 +112,30 @@ final class Model: ObservableObject {
             }
         })
     }
+
+    //MARK: Do not Disturb stuff
+
+    func enableDND() {
+        guard dndToggle else { return }
+        // On Monterey or newer, we have to use shortcuts. Older we need to do plist trickery.
+        if NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue {
+            // TODO: Big Sur and older
+        } else {
+            print(SwiftShell.run(bash: "shortcuts run dndon").exitcode)
+        }
+    }
+
+    func disableDND() {
+        guard dndToggle else { return }
+        // On Monterey or newer, we have to use shortcuts. Older we need to do plist trickery.
+        if NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue {
+            // TODO: Big Sur and older
+        } else {
+            print(SwiftShell.run(bash: "shortcuts run dndoff"))
+        }
+    }
+
+    // MARK: Cleanup
 
     func stop() {
         timer?.invalidate()
@@ -211,24 +234,3 @@ struct ShortcutsListProvider {
         })
     }
 }
-
-struct DNDUtil {
-    static func enableDND() {
-        // On Monterey or newer, we have to use shortcuts. Older we need to do plist trickery.
-        if NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue {
-            // TODO: Big Sur and older
-        } else {
-            print(SwiftShell.run(bash: "shortcuts run dndon").exitcode)
-        }
-    }
-
-    static func disableDND() {
-        // On Monterey or newer, we have to use shortcuts. Older we need to do plist trickery.
-        if NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue {
-            // TODO: Big Sur and older
-        } else {
-            print(SwiftShell.run(bash: "shortcuts run dndoff"))
-        }
-    }
-}
-

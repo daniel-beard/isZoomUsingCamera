@@ -10,7 +10,7 @@ import SwiftUI
 import Combine
 
 struct ContentView: View {
-    @EnvironmentObject var userData: Model
+    @EnvironmentObject var model: Model
     @State private var showingPrefs = false
 
     var body: some View {
@@ -29,11 +29,11 @@ struct ContentView: View {
                 }
             }.animation(.easeInOut, value: showingPrefs)
             if !showingPrefs {
-                Text(userData.textResult)
+                Text(model.textResult)
                     .frame(maxWidth: .infinity, maxHeight: 100)
-                    .onAppear { self.userData.start() }
+                    .onAppear { self.model.start() }
                     .animation(.easeInOut, value: showingPrefs)
-                Text(userData.screensharingText)
+                Text(model.screensharingText)
                     .frame(maxWidth: .infinity, maxHeight: 300)
                     .animation(.easeInOut, value: showingPrefs)
             }
@@ -55,28 +55,33 @@ struct ContentView: View {
 }
 
 struct PrefsView: View {
-    @EnvironmentObject var userData: Model
+    @EnvironmentObject var model: Model
     var body: some View {
         VStack {
             Form {
                 Section {
-                    Toggle(isOn: $userData.dndToggle) {
+                    Toggle(isOn: $model.dndToggle) {
                         Text("Automatically enable DND when Zoom video is on")
-                    }.background(Color.red)
-                    Picker(selection: $userData.dndOnShortcutSelection, label:
-                        Text("DND on shortcut")
-                        , content: {
-                        ForEach(userData.listOfAvailableShortcuts, id: \.self) { val in
-                            Text(val)
-                        }
-                    })
-                    Picker(selection: $userData.dndOffShortcutSelection, label:
-                        Text("DND off shortcut")
-                        , content: {
-                        ForEach(userData.listOfAvailableShortcuts, id: \.self) { val in
-                            Text(val)
-                        }
-                    })
+                    }
+                    if model.canShowShortcuts {
+                        Picker(selection: $model.dndOnShortcutSelection, label:
+                            Text("DND on shortcut")
+                            , content: {
+                            ForEach(model.listOfAvailableShortcuts, id: \.self) { val in
+                                Text(val)
+                            }
+                        })
+                        Picker(selection: $model.dndOffShortcutSelection, label:
+                            Text("DND off shortcut")
+                            , content: {
+                            ForEach(model.listOfAvailableShortcuts, id: \.self) { val in
+                                Text(val)
+                            }
+                        })
+                    }
+                    Toggle(isOn: $model.runCustomScripts) {
+                        Text("Run custom scripts in ~/.iszoomusingcamera")
+                    }
                     Spacer()
                     Button {
                         exit(0)
@@ -91,8 +96,6 @@ struct PrefsView: View {
 }
 
 struct PrefsView_Previews: PreviewProvider {
-    @State static var dndOnShortcutMock = ""
-    @State static var dndOffShortcutMock = ""
     static var previews: some View {
         PrefsView().environmentObject(Model())
     }
