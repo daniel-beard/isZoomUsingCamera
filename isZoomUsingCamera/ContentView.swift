@@ -61,20 +61,16 @@ struct PrefsView: View {
             Form {
                 Section {
                     Toggle(isOn: $model.dndToggle) {
-                        Text("Toggle Do not Disturb (DnD) when Zoom video is on")
+                        Text("Toggle Do not Disturb (DnD)\nwhen Zoom video is on")
                             .multilineTextAlignment(.trailing)
                     }.toggleStyle(.switch)
                     if model.canShowShortcuts {
-                        Picker(selection: $model.dndOnShortcutSelection, label:
-                            Text("DnD on shortcut")
-                            , content: {
+                        Picker("DnD 'on' shortcut", selection: $model.dndOnShortcutSelection, content: {
                             ForEach(model.listOfAvailableShortcuts, id: \.self) { val in
                                 Text(val)
                             }
                         })
-                        Picker(selection: $model.dndOffShortcutSelection, label:
-                            Text("DnD off shortcut")
-                            , content: {
+                        Picker("DnD 'off' shortcut", selection: $model.dndOffShortcutSelection, content: {
                             ForEach(model.listOfAvailableShortcuts, id: \.self) { val in
                                 Text(val)
                             }
@@ -91,7 +87,7 @@ struct PrefsView: View {
                     }
                 }
             }
-
+            Text("Author: https://github.com/daniel-beard Version: 1.2")
         }.padding([.all])
     }
 }
