@@ -61,18 +61,19 @@ struct PrefsView: View {
             Form {
                 Section {
                     Toggle(isOn: $model.dndToggle) {
-                        Text("Automatically enable DND when Zoom video is on")
-                    }
+                        Text("Toggle Do not Disturb (DnD) when Zoom video is on")
+                            .multilineTextAlignment(.trailing)
+                    }.toggleStyle(.switch)
                     if model.canShowShortcuts {
                         Picker(selection: $model.dndOnShortcutSelection, label:
-                            Text("DND on shortcut")
+                            Text("DnD on shortcut")
                             , content: {
                             ForEach(model.listOfAvailableShortcuts, id: \.self) { val in
                                 Text(val)
                             }
                         })
                         Picker(selection: $model.dndOffShortcutSelection, label:
-                            Text("DND off shortcut")
+                            Text("DnD off shortcut")
                             , content: {
                             ForEach(model.listOfAvailableShortcuts, id: \.self) { val in
                                 Text(val)
@@ -81,12 +82,12 @@ struct PrefsView: View {
                     }
                     Toggle(isOn: $model.runCustomScripts) {
                         Text("Run custom scripts in ~/.iszoomusingcamera")
-                    }
+                    }.toggleStyle(.switch)
                     Spacer()
                     Button {
                         exit(0)
                     } label: {
-                        Text("Quit the App")
+                        Text("Quit the App").foregroundColor(Color.red)
                     }
                 }
             }

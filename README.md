@@ -46,3 +46,31 @@ Remember to make these scripts user executable with `chmod +x ~/.iszoomusingcame
 | Screen sharing started | `~/.iszoomusingcamera/screen_sharing_started.sh` |
 | Screen sharing ended | `~/.iszoomusingcamera/screen_sharing_ended.sh` |
 
+## Custom Script Example
+
+Here's some example scripts that I use. You'll need to `brew install terminal-notifier` for this to work. Note: paths are correct for M1 machines, if you are on x86_64, change these to `/usr/local/bin/`:
+
+`~/.iszoomusingcamera/camera_enabled.sh`:
+
+```bash
+#!/bin/bash
+
+/opt/homebrew/bin/terminal-notifier -title "isZoomUsingCamera" \
+  -message "Camera was STARTED" \
+  -contentImage "https://raw.githubusercontent.com/daniel-beard/isZoomUsingCamera/master/isZoomUsingCamera/Assets.xcassets/AppIcon.appiconset/icon_128.png" \
+```
+
+`~/.iszoomusingcamera/camera_disabled.sh`:
+
+```bash
+#!/bin/bash
+
+/opt/homebrew/bin/terminal-notifier -title "isZoomUsingCamera" \
+  -message "Camera was STOPPED" \
+  -contentImage "https://raw.githubusercontent.com/daniel-beard/isZoomUsingCamera/master/isZoomUsingCamera/Assets.xcassets/AppIcon.appiconset/icon_128.png" \
+```
+
+So I get notifications when the camera starts or stops:
+
+<img src="./Resources/notifs.png" width="500" />
+

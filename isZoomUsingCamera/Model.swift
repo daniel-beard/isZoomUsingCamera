@@ -32,6 +32,7 @@ enum CameraSampleResult {
 }
 
 enum ScreenSharingSampleResult {
+    case noResult
     case notScreenSharing
     case screenSharing
 
@@ -39,12 +40,28 @@ enum ScreenSharingSampleResult {
         switch self {
         case .notScreenSharing: return "Not screen sharing"
         case .screenSharing:    return "Screen sharing"
+        default: return ""
         }
     }
 }
 
+enum ZoomProcessResult {
+    case noResult
+    case appRunning
+    case appNotRunning
+}
+
 enum ShortcutsError: Error {
     case canNotRetrieve(String)
+}
+
+enum CustomScriptEvent: String {
+    case appStarted =            "~/.iszoomusingcamera/app_started.sh"
+    case appEnded =              "~/.iszoomusingcamera/app_ended.sh"
+    case cameraEnabled =         "~/.iszoomusingcamera/camera_enabled.sh"
+    case cameraDisabled =        "~/.iszoomusingcamera/camera_disabled.sh"
+    case screenSharingStarted =  "~/.iszoomusingcamera/screen_sharing_started.sh"
+    case screenSharingEnded =    "~/.iszoomusingcamera/screen_sharing_ended.sh"
 }
 
 //MARK: Top level observable
@@ -62,19 +79,49 @@ final class Model: ObservableObject {
         didSet {
             guard dndToggle == true else { return }
             guard oldValue != textResult else { return }
-            switch cameraSampleResult {
-                case .usingCamera: enableDND()
-                case .notUsingCamera, .zoomNotRunning: disableDND()
-                default: break
-            }
+
         }
     }
     @Published var screensharingText: String = "Not sharing screen"
 
     let interval: TimeInterval = 1
     private var timer: Timer? = nil
-    private var cameraSampleResult: CameraSampleResult = .noResult
-    private var screenShareSampleResult: ScreenSharingSampleResult = .notScreenSharing
+    private var cameraSampleResult: CameraSampleResult = .noResult {
+        didSet {
+            guard oldValue != .noResult else { return }
+            guard oldValue != .zoomNotRunning else { return }
+            guard oldValue != cameraSampleResult else { return }
+            switch cameraSampleResult {
+                case .usingCamera: enableDND(); runCustomScript(forEvent: .cameraEnabled)
+                case .notUsingCamera: disableDND(); runCustomScript(forEvent: .cameraDisabled)
+                case .zoomNotRunning: disableDND();
+                default: break
+            }
+        }
+    }
+    private var screenShareSampleResult: ScreenSharingSampleResult = .noResult {
+        didSet {
+            guard oldValue != screenShareSampleResult else { return }
+            guard oldValue != .noResult else { return }
+            switch screenShareSampleResult {
+                case .screenSharing: runCustomScript(forEvent: .screenSharingStarted)
+                case .notScreenSharing: runCustomScript(forEvent: .screenSharingEnded)
+                default: break
+            }
+        }
+    }
+
+    private var zoomProcess: ZoomProcessResult = .noResult {
+        didSet {
+            guard oldValue != .noResult else { return }
+            guard oldValue != zoomProcess else { return }
+            switch zoomProcess {
+                case .appRunning: runCustomScript(forEvent: .appStarted)
+                case .appNotRunning: runCustomScript(forEvent: .appEnded)
+                default: break
+            }
+        }
+    }
 
     @Published var listOfAvailableShortcuts = [String]()
     private var shortcutsProvider = ShortcutsListProvider()
@@ -110,6 +157,11 @@ final class Model: ObservableObject {
                     self?.screensharingText = result.displayText()
                 }
             }
+            ZoomProcessProvider().run { result in
+                DispatchQueue.main.async {
+                    self?.zoomProcess = result
+                }
+            }
         })
     }
 
@@ -135,6 +187,18 @@ final class Model: ObservableObject {
         }
     }
 
+    // MARK: Custom scripts
+
+    func runCustomScript(forEvent event: CustomScriptEvent) {
+        guard runCustomScripts else { return }
+        print("Running custom script: \(event.rawValue)")
+        DispatchQueue(label: "CustomScripts").async {
+            //TODO: Log outputs to a ~/Library file somewhere
+            let result = SwiftShell.run(bash: "bash \(event.rawValue)")
+            print("Custom script exitcode: \(result.exitcode)\nstdout: \(result.stdout)\n\(result.stderror)")
+        }
+    }
+
     // MARK: Cleanup
 
     func stop() {
@@ -149,13 +213,26 @@ final class Model: ObservableObject {
 
 // MARK: Zoom providers
 
+struct ZoomProcessProvider {
+    func run(callback: @escaping (ZoomProcessResult) -> Void) {
+        DispatchQueue(label: "ZoomProcessProvider").async {
+            let zoomApps = NSRunningApplication.runningApplications(withBundleIdentifier: "us.zoom.xos")
+            guard !zoomApps.isEmpty else {
+                callback(.appNotRunning)
+                return
+            }
+            callback(.appRunning)
+        }
+    }
+}
+
 struct ScreenSharingUsageSampleProvider {
     let sampleDuration = 0.1
     let sampleFile = "/tmp/zoomsamplescreensharing"
     let sampleSentinel = "capture thread"
 
     func run(callback: @escaping (ScreenSharingSampleResult) -> Void) {
-        DispatchQueue(label: "Sampler").async {
+        DispatchQueue(label: "ScreenSharingSampler").async {
 
             let zoomApps = NSRunningApplication.runningApplications(withBundleIdentifier: "us.zoom.CptHost")
             guard !zoomApps.isEmpty else {
@@ -189,7 +266,7 @@ struct CameraUsageSampleProvider {
     let sampleSentinel = "CMIOGraph::DoWork"
 
     func run(callback: @escaping (CameraSampleResult) -> Void) {
-        DispatchQueue(label: "Sampler").async {
+        DispatchQueue(label: "CameraUsageSampler").async {
 
             let zoomApps = NSRunningApplication.runningApplications(withBundleIdentifier: "us.zoom.xos")
             guard !zoomApps.isEmpty else {
@@ -205,11 +282,11 @@ struct CameraUsageSampleProvider {
             SwiftShell.run(bash: "/usr/bin/sample \(pid) \(self.sampleDuration) -f \(self.sampleFile)")
 
             // Parse output and return a result. 0 exitCode is a match.
-            let exitCode = SwiftShell.run(bash: "/usr/bin/grep '\(self.sampleSentinel)' \(self.sampleFile)").exitcode
+            let grepExitCode = SwiftShell.run(bash: "/usr/bin/grep '\(self.sampleSentinel)' \(self.sampleFile)").exitcode
 
-            if exitCode == 0 {
+            if grepExitCode == 0 {
                 callback(.usingCamera); return
-            } else if exitCode == 1 {
+            } else if grepExitCode == 1 {
                 callback(.notUsingCamera); return
             } else {
                 callback(.errorSampling); return
