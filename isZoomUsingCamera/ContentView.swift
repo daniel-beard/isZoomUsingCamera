@@ -60,11 +60,11 @@ struct PrefsView: View {
         VStack {
             Form {
                 Section {
-                    Toggle(isOn: $model.dndToggle) {
-                        Text("Toggle Do not Disturb (DnD)\nwhen Zoom video is on")
-                            .multilineTextAlignment(.trailing)
-                    }.toggleStyle(.switch)
                     if model.canShowShortcuts {
+                        Toggle(isOn: $model.dndToggle) {
+                            Text("Toggle Do not Disturb (DnD)\nwhen Zoom video is on")
+                                .multilineTextAlignment(.trailing)
+                        }.toggleStyle(.switch)
                         Picker("DnD 'on' shortcut", selection: $model.dndOnShortcutSelection, content: {
                             ForEach(model.listOfAvailableShortcuts, id: \.self) { val in
                                 Text(val)

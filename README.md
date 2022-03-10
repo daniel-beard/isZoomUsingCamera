@@ -30,7 +30,29 @@ Now you can select and save the shortcut names for each do not disturb action in
 
 ## Big Sur
 
-TODO: Coming soon
+This app doesn't have any native support for setting do not disturb states on Big Sur, but you can emulate the behavior with custom scripts.
+
+### Example
+
+Requirements: `brew install vitorgalvao/tiny-scripts/calm-notifications`
+
+To toggle DnD on camera states:
+
+`~/.iszoomusingcamera/camera_enabled.sh`
+
+```bash
+#!/bin/bash
+
+calm-notifications on
+```
+
+`~/.iszoomusingcamera/camera_disabled.sh`
+
+```bash
+#!/bin/bash
+
+calm-notifications off
+```
 
 # Custom Scripts
 
