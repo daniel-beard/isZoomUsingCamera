@@ -72,6 +72,7 @@ final class Model: ObservableObject {
     @AppStorage("dndOffShortcut") var dndOffShortcutSelection = ""
     @AppStorage("shouldToggleDND") var dndToggle = false
     @AppStorage("runCustomScripts") var runCustomScripts = false
+    @AppStorage("hideWindowOnLaunch") var hideWindowOnLaunch = false
 
     @Published var canShowShortcuts = false
 
@@ -197,6 +198,12 @@ final class Model: ObservableObject {
             let result = SwiftShell.run(bash: "bash \(event.rawValue)")
             print("Custom script exitcode: \(result.exitcode)\nstdout: \(result.stdout)\n\(result.stderror)")
         }
+    }
+
+    // MARK: Hide application window
+
+    func hideApplicationWindow() {
+        NSApp.hide(nil)
     }
 
     // MARK: Cleanup

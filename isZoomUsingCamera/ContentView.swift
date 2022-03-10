@@ -79,6 +79,14 @@ struct PrefsView: View {
                     Toggle(isOn: $model.runCustomScripts) {
                         Text("Run custom scripts in ~/.iszoomusingcamera")
                     }.toggleStyle(.switch)
+                    Toggle(isOn: $model.hideWindowOnLaunch) {
+                        Text("Hide application window on launch")
+                    }.toggleStyle(.switch)
+                    Button {
+                        model.hideApplicationWindow()
+                    } label: {
+                        Text("Hide window now").foregroundColor(Color.orange)
+                    }
                     Spacer()
                     Button {
                         exit(0)
@@ -87,7 +95,7 @@ struct PrefsView: View {
                     }
                 }
             }
-            Text("Author: https://github.com/daniel-beard Version: 1.2")
+            Text("Author: https://github.com/daniel-beard v1.2")
         }.padding([.all])
     }
 }
