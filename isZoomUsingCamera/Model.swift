@@ -13,36 +13,18 @@ import SwiftShell
 
 // MARK: Types and enums
 
-enum CameraSampleResult {
-    case noResult
-    case usingCamera
-    case zoomNotRunning
-    case notUsingCamera
-    case errorSampling
-
-    func displayText() -> String {
-        switch self {
-            case .noResult:         return "No result"
-            case .usingCamera:      return "Zoom is USING the camera"
-            case .notUsingCamera:   return "Zoom is NOT USING the camera"
-            case .zoomNotRunning:   return "Zoom does not appear to be running"
-            case .errorSampling:    return "Error sampling"
-        }
-    }
+enum CameraSampleResult: String {
+    case noResult       = "No result"
+    case usingCamera    = "Zoom is USING the camera"
+    case zoomNotRunning = "Zoom is NOT USING the camera"
+    case notUsingCamera = "Zoom does not appear to be running"
+    case errorSampling  = "Error sampling"
 }
 
-enum ScreenSharingSampleResult {
-    case noResult
-    case notScreenSharing
-    case screenSharing
-
-    func displayText() -> String {
-        switch self {
-        case .notScreenSharing: return "Not screen sharing"
-        case .screenSharing:    return "Screen sharing"
-        default: return ""
-        }
-    }
+enum ScreenSharingSampleResult: String {
+    case noResult           = ""
+    case notScreenSharing   = "Not screen sharing"
+    case screenSharing      = "Screen sharing is active"
 }
 
 enum ZoomProcessResult {
@@ -87,9 +69,9 @@ final class Model: ObservableObject {
             guard oldValue != .zoomNotRunning else { return }
             guard oldValue != cameraSampleResult else { return }
             switch cameraSampleResult {
-                case .usingCamera: enableDND(); runCustomScript(forEvent: .cameraEnabled)
-                case .notUsingCamera: disableDND(); runCustomScript(forEvent: .cameraDisabled)
-                case .zoomNotRunning: disableDND();
+                case .usingCamera:      enableDND();    runCustomScript(forEvent: .cameraEnabled)
+                case .notUsingCamera:   disableDND();   runCustomScript(forEvent: .cameraDisabled)
+                case .zoomNotRunning:   disableDND();
                 default: break
             }
         }
@@ -99,7 +81,7 @@ final class Model: ObservableObject {
             guard oldValue != screenShareSampleResult else { return }
             guard oldValue != .noResult else { return }
             switch screenShareSampleResult {
-                case .screenSharing: runCustomScript(forEvent: .screenSharingStarted)
+                case .screenSharing:    runCustomScript(forEvent: .screenSharingStarted)
                 case .notScreenSharing: runCustomScript(forEvent: .screenSharingEnded)
                 default: break
             }
@@ -111,7 +93,7 @@ final class Model: ObservableObject {
             guard oldValue != .noResult else { return }
             guard oldValue != zoomProcess else { return }
             switch zoomProcess {
-                case .appRunning: runCustomScript(forEvent: .appStarted)
+                case .appRunning:    runCustomScript(forEvent: .appStarted)
                 case .appNotRunning: runCustomScript(forEvent: .appEnded)
                 default: break
             }
@@ -143,13 +125,13 @@ final class Model: ObservableObject {
             CameraUsageSampleProvider().run(callback: { result in
                 DispatchQueue.main.async {
                     self?.cameraSampleResult = result
-                    self?.textResult = result.displayText()
+                    self?.textResult = result.rawValue
                 }
             })
             ScreenSharingUsageSampleProvider().run { result in
                 DispatchQueue.main.async {
                     self?.screenShareSampleResult = result
-                    self?.screensharingText = result.displayText()
+                    self?.screensharingText = result.rawValue
                 }
             }
             ZoomProcessProvider().run { result in
