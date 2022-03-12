@@ -16,8 +16,8 @@ import SwiftShell
 enum CameraSampleResult: String {
     case noResult       = "No result"
     case usingCamera    = "Zoom is USING the camera"
-    case zoomNotRunning = "Zoom is NOT USING the camera"
-    case notUsingCamera = "Zoom does not appear to be running"
+    case zoomNotRunning = "Zoom is NOT USING the camera (not running)"
+    case notUsingCamera = "Zoom is NOT USING the camera"
     case errorSampling  = "Error sampling"
 }
 
@@ -27,10 +27,17 @@ enum ScreenSharingSampleResult: String {
     case screenSharing      = "Screen sharing is active"
 }
 
-enum ZoomProcessResult {
+enum ZoomProcessStateResult {
     case noResult
     case appRunning
     case appNotRunning
+}
+
+enum ZoomMultipleProcessResult {
+    case noResult
+    case notRunning
+    case oneInstance
+    case multipleInstances
 }
 
 enum ShortcutsError: Error {
@@ -57,6 +64,7 @@ final class Model: ObservableObject {
     @AppStorage("hideWindowOnLaunch") var hideWindowOnLaunch = false
 
     @Published var canShowShortcuts = false
+    @Published var haveMultipleZoomInstances = false
 
     @Published var textResult: String = "No results"
     @Published var screensharingText: String = "Not sharing screen"
@@ -88,13 +96,24 @@ final class Model: ObservableObject {
         }
     }
 
-    private var zoomProcess: ZoomProcessResult = .noResult {
+    private var zoomProcessState: ZoomProcessStateResult = .noResult {
         didSet {
             guard oldValue != .noResult else { return }
-            guard oldValue != zoomProcess else { return }
-            switch zoomProcess {
+            guard oldValue != zoomProcessState else { return }
+            switch zoomProcessState {
                 case .appRunning:    runCustomScript(forEvent: .appStarted)
                 case .appNotRunning: runCustomScript(forEvent: .appEnded)
+                default: break
+            }
+        }
+    }
+    private var haveShownZoomCountWarning = false
+    private var zoomCountState: ZoomMultipleProcessResult = .noResult {
+        didSet {
+            guard oldValue != zoomCountState else { return }
+            guard haveShownZoomCountWarning == false else { return }
+            switch zoomCountState {
+            case .multipleInstances: haveMultipleZoomInstances = true
                 default: break
             }
         }
@@ -105,6 +124,7 @@ final class Model: ObservableObject {
 
     init() {
         canShowShortcuts = !(NSAppKitVersion.current.rawValue <= NSAppKitVersion.macOS11_4.rawValue)
+        objectWillChange.send()
     }
 
     func fetchShortcutsList() async {
@@ -134,9 +154,14 @@ final class Model: ObservableObject {
                     self?.screensharingText = result.rawValue
                 }
             }
-            ZoomProcessProvider().run { result in
+            ZoomProcessStateProvider().run { result in
                 DispatchQueue.main.async {
-                    self?.zoomProcess = result
+                    self?.zoomProcessState = result
+                }
+            }
+            ZoomMultipleProcessProvider().run { result in
+                DispatchQueue.main.async {
+                    self?.zoomCountState = result
                 }
             }
         })
@@ -196,8 +221,8 @@ final class Model: ObservableObject {
 
 // MARK: Zoom providers
 
-struct ZoomProcessProvider {
-    func run(callback: @escaping (ZoomProcessResult) -> Void) {
+struct ZoomProcessStateProvider {
+    func run(callback: @escaping (ZoomProcessStateResult) -> Void) {
         DispatchQueue(label: "ZoomProcessProvider").async {
             let zoomApps = NSRunningApplication.runningApplications(withBundleIdentifier: "us.zoom.xos")
             guard !zoomApps.isEmpty else {
@@ -205,6 +230,20 @@ struct ZoomProcessProvider {
                 return
             }
             callback(.appRunning)
+        }
+    }
+}
+
+struct ZoomMultipleProcessProvider {
+    func run(callback: @escaping (ZoomMultipleProcessResult) -> Void) {
+        DispatchQueue(label: "ZoomMultipleProcessProvider").async {
+            let zoomApps = NSRunningApplication.runningApplications(withBundleIdentifier: "us.zoom.xos")
+            guard !zoomApps.isEmpty else { callback(.notRunning); return }
+            if zoomApps.count == 1 {
+                callback(.oneInstance)
+            } else if zoomApps.count > 1 {
+                callback(.multipleInstances)
+            }
         }
     }
 }

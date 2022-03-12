@@ -11,7 +11,9 @@ import Combine
 
 struct ContentView: View {
     @EnvironmentObject var model: Model
-    @State private var showingPrefs = false
+    @State var showingPrefs = false
+    @State var bannerData = BannerData(title: "Multiple Zoom Instances Detected!",
+                                       detail: "Warning: This application currently only detects events in the first Zoom process it finds. Close the other instance of Zoom for more reliable results.", type: .Error)
 
     var body: some View {
         // Top VStack
@@ -50,7 +52,9 @@ struct ContentView: View {
                     PrefsView()
                 }
             }.padding([.all]).animation(.easeInOut, value: showingPrefs)
-        }.padding([.all])
+        }
+        .padding([.all])
+        .banner(data: $bannerData, show: $model.haveMultipleZoomInstances)
     }
 }
 
